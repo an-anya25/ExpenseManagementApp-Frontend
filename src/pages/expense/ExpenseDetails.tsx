@@ -77,7 +77,7 @@ const ExpenseDetails = () => {
                 <th>Date</th>
                 <td>
                   {expense
-                    ? DateUtils.formateDateString(expense?.createdAt!)
+                    ? DateUtils.formateDateString(expense?.date!)
                     : "N.A"}
                 </td>
               </tr>
