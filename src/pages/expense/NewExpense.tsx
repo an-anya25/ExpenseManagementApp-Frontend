@@ -3,26 +3,55 @@ import { Expense } from "../../model/Expense";
 import expenseValidationSchema from "../../validation/expenseValidationSchema";
 import Dropdown from "../../components/Dropdown";
 import { expenseCategories } from "../../utils/AppConstants";
-import { saveOrUpdateExpense } from "../../services/expense-service";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  getExpenseByExpenseId,
+  saveOrUpdateExpense,
+} from "../../services/expense-service";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 const NewExpense = () => {
+  const { expenseId } = useParams<{ expenseId: string }>();
   const navigate = useNavigate();
   const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const defaultInitialvalues = {
+    name: "",
+    amount: 0,
+    note: "",
+    category: "",
+    date: new Date().toISOString().split("T")[0],
+  };
+  const [initialValues, setInitialValues] =
+    useState<Expense>(defaultInitialvalues);
+
+  useEffect(() => {
+    if (expenseId) {
+      setLoading(true);
+      getExpenseByExpenseId(expenseId)
+        .then((response) => {
+          if (response && response.data) {
+            setInitialValues(response.data);
+          }
+        })
+        .catch((errors) => setError(errors.message))
+        .finally(() => setLoading(false));
+    } else {
+      setInitialValues(defaultInitialvalues);
+      formik.resetForm({ values: defaultInitialvalues });
+    }
+  }, [expenseId]);
+
   const formik = useFormik({
-    initialValues: {
-      name: "",
-      amount: 0,
-      note: "",
-      category: "",
-      date: new Date().toISOString().split("T")[0],
-    },
+    initialValues,
+    enableReinitialize: true,
     onSubmit: (values: Expense) => {
       saveOrUpdateExpense(values)
         .then((response) => {
           if (response && response.status === 201) {
             navigate("/");
+          } else if (response && response.status == 200) {
+            navigate(`/view/${expenseId}`);
           }
         })
         .catch((error) => {
@@ -36,6 +65,7 @@ const NewExpense = () => {
     <div className="d-flex justify-content-center align-items-center mt-2">
       <div className="container col-md-4 col-sm-8 col-xs-12">
         {error && <p className="text-danger">{error}</p>}
+        {loading && <h1>Loading!!!!!!!!!!!!</h1>}
         <form onSubmit={formik.handleSubmit}>
           <div className="mb-3">
             <label htmlFor="name" className="form-label">
